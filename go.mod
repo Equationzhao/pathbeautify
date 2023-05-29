@@ -1,4 +1,4 @@
-module pathbeautify
+module github.com/Equationzhao/pathbeautify
 
 go 1.20
 
