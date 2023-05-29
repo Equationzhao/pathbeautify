@@ -1,6 +1,7 @@
 package pathbeautify
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -51,6 +52,16 @@ func TestTransform(t *testing.T) {
 			wantTransformed: filepath.Join("..", "..", "..", "..", "a", "b", "c"),
 		},
 		{
+			name:            "dots/dots/path",
+			args:            args{path: "..../../.../a/b/c"},
+			wantTransformed: filepath.Join("..", "..", "..", "..", "..", "..", "a", "b", "c"),
+		},
+		{
+			name:            "dots/dots",
+			args:            args{path: "../.../..../.."},
+			wantTransformed: filepath.Join("..", "..", "..", "..", "..", "..", ".."),
+		},
+		{
 			name:            "dots/dots",
 			args:            args{path: "a/b/.../.../../c"},
 			wantTransformed: strings.Join([]string{"a", "b", "..", "..", "..", "..", "..", "c"}, string(filepath.Separator)),
@@ -77,5 +88,19 @@ func TestTransform(t *testing.T) {
 				t.Errorf("Transform() = %v, want %v", gotTransformed, tt.wantTransformed)
 			}
 		})
+	}
+}
+
+func BenchmarkGetUserHomeDir(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		s := GetUserHomeDir()
+		_ = s
+	}
+}
+
+func BenchmarkOSGetUserHomeDir(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		s, _ := os.UserHomeDir()
+		_ = s
 	}
 }

@@ -24,9 +24,23 @@ var replacer = strings.NewReplacer(
 	"/", string(filepath.Separator),
 )
 
-// Transform ~ to $HOME
-// ... -> ../..
-// .... -> ../../..
+// CleanSeparator convert '//' and '\' to os-specific separator
+func CleanSeparator(path string) string {
+	return replacer.Replace(path)
+}
+
+// Beautify is alias of Transform
+func Beautify(path string) string {
+	return Transform(path)
+}
+
+// Transform path
+//
+//	~ -> $HOME
+//	~/a/b/c -> $HOME/a/b/c
+//	... -> ../..
+//	.... -> ../../..
+//	..../../.../a/b/c -> ../../../../../../a/b/c
 func Transform(path string) (transformed string) {
 
 	switch path {
@@ -39,7 +53,7 @@ func Transform(path string) (transformed string) {
 	case "~":
 		path = GetUserHomeDir()
 	default:
-		path = replacer.Replace(path)
+		path = CleanSeparator(path)
 		// if strings.HasPrefix(path, "/") || strings.HasPrefix(path, "\\") {
 		// 	return path
 		// }
