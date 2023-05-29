@@ -40,7 +40,7 @@ func Transform(path string) (transformed string) {
 		}
 
 		if strings.HasPrefix(path, string(filepath.Separator)) {
-			return
+			return path
 		}
 
 		// .....?
