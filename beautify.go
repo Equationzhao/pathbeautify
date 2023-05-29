@@ -19,10 +19,16 @@ func GetUserHomeDir() string {
 	return userHomeDir
 }
 
+var replacer = strings.NewReplacer(
+	"\\", string(filepath.Separator),
+	"/", string(filepath.Separator),
+)
+
 // Transform ~ to $HOME
 // ... -> ../..
 // .... -> ../../..
 func Transform(path string) (transformed string) {
+
 	switch path {
 	case ".", "..":
 	case "...":
@@ -33,54 +39,73 @@ func Transform(path string) (transformed string) {
 	case "~":
 		path = GetUserHomeDir()
 	default:
+		path = replacer.Replace(path)
+		// if strings.HasPrefix(path, "/") || strings.HasPrefix(path, "\\") {
+		// 	return path
+		// }
+
 		// ~/a/b/c
 		if strings.HasPrefix(path, "~") {
 			home := GetUserHomeDir()
 			path = home + (path)[1:]
 		}
 
-		if strings.HasPrefix(path, string(filepath.Separator)) {
-			return path
+		names := strings.Split(path, string(filepath.Separator))
+		for i := range names {
+			names[i] = clean(names[i])
 		}
-
-		// .....?
-		// start from 3, aka ...
-		matchDots := true
-		times := -1
-		for _, dot := range path {
-			if dot != '.' {
-				if dot != filepath.Separator {
-					matchDots = false
-				}
-				break
-			}
-			times++
-		}
-
-		// case 1
-		// .../a/b/c -> times = 2
-		// ../../ + a/b/c -> ../../a/b/c
-		// case 2
-		// ... -> times = 2
-		// ../../ + empty -> ../../
-		// case 3
-		// .../ -> times = 2
-		// ../../ + empty -> ../../
-		if matchDots {
-			const parent = ".."
-			buffer := bytebufferpool.Get()
-			for i := 0; i < times; i++ {
-				_, _ = buffer.WriteString(parent)
-				_ = buffer.WriteByte(filepath.Separator)
-			}
-			if times+2 < len(path) {
-				_, _ = buffer.WriteString((path)[times+2:])
-			}
-
-			path = buffer.String()
-			bytebufferpool.Put(buffer)
-		}
-
+		path = strings.Join(names, string(filepath.Separator))
 	}
 	return path
+}
+
+func clean(path string) string {
+	// start from 3, aka ...
+	matchDots := true
+	times := -1
+	for _, dot := range path {
+		if dot != '.' {
+			if !IsPathSeparator(dot) {
+				matchDots = false
+			}
+			break
+		}
+		times++
+	}
+
+	if matchDots {
+		path = cleanDot(path, times)
+	}
+	return path
+}
+
+func cleanDot(path string, times int) string {
+	// case 1
+	// .../a/b/c -> times = 2
+	// ../../ + a/b/c -> ../../a/b/c
+	// case 2
+	// ... -> times = 2
+	// ../../ + empty -> ../../
+	// case 3
+	// .../ -> times = 2
+	// ../../ + empty -> ../../
+	const parent = ".."
+	buffer := bytebufferpool.Get()
+	for i := 0; i < times; i++ {
+		_, _ = buffer.WriteString(parent)
+		if i != times-1 {
+			_ = buffer.WriteByte(filepath.Separator)
+		}
+	}
+	if times+2 < len(path) {
+		_, _ = buffer.WriteString((path)[times+2:])
+	}
+
+	path = buffer.String()
+	bytebufferpool.Put(buffer)
+	return path
+}
+
+func IsPathSeparator(c rune) bool {
+	return c == '\\' || c == '/'
 }
