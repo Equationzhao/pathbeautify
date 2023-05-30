@@ -81,6 +81,16 @@ func TestTransform(t *testing.T) {
 			args:            args{path: "/a/b/.../c"},
 			wantTransformed: strings.Join([]string{"", "a", "b", "..", "..", "c"}, string(filepath.Separator)),
 		},
+		{
+			name:            "./path",
+			args:            args{path: "./a/b/c"},
+			wantTransformed: strings.Join([]string{".", "a", "b", "c"}, string(filepath.Separator)),
+		},
+		{
+			name:            "./",
+			args:            args{path: "./"},
+			wantTransformed: filepath.Join(".", ""),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

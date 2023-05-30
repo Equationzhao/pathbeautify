@@ -44,6 +44,8 @@ func Beautify(path string) string {
 func Transform(path string) (transformed string) {
 
 	switch path {
+	case "./":
+		path = "."
 	case ".", "..":
 	case "...":
 		path = filepath.Join("..", "..")
@@ -65,6 +67,7 @@ func Transform(path string) (transformed string) {
 		}
 
 		names := strings.Split(path, string(filepath.Separator))
+
 		for i := range names {
 			names[i] = clean(names[i])
 		}
@@ -94,6 +97,10 @@ func clean(path string) string {
 }
 
 func cleanDot(path string, times int) string {
+	if times == 0 {
+		return path
+	}
+
 	// case 1
 	// .../a/b/c -> times = 2
 	// ../../ + a/b/c -> ../../a/b/c
