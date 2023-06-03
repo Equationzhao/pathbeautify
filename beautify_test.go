@@ -1,13 +1,13 @@
 package pathbeautify
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
 
 func TestTransform(t *testing.T) {
+
 	type args struct {
 		path string
 	}
@@ -25,6 +25,11 @@ func TestTransform(t *testing.T) {
 			name:            "homedir+path",
 			args:            args{path: "~/a/b/c"},
 			wantTransformed: filepath.Join(GetUserHomeDir(), "a", "b", "c"),
+		},
+		{
+			name:            "homedir/path/dots/...",
+			args:            args{path: "~/a/b/c/..."},
+			wantTransformed: strings.Join([]string{GetUserHomeDir(), "a", "b", "c", "..", ".."}, string(filepath.Separator)),
 		},
 		{
 			name:            "normal path",
@@ -98,19 +103,5 @@ func TestTransform(t *testing.T) {
 				t.Errorf("Transform() = %v, want %v", gotTransformed, tt.wantTransformed)
 			}
 		})
-	}
-}
-
-func BenchmarkGetUserHomeDir(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		s := GetUserHomeDir()
-		_ = s
-	}
-}
-
-func BenchmarkOSGetUserHomeDir(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		s, _ := os.UserHomeDir()
-		_ = s
 	}
 }

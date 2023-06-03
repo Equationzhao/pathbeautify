@@ -4,19 +4,37 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/valyala/bytebufferpool"
 )
 
-var syncHomedir sync.Once
+var syncHomedir once
 var userHomeDir string
 
+// GetUserHomeDir returns user home directory
+// if error, return empty string
 func GetUserHomeDir() string {
-	syncHomedir.Do(func() {
-		userHomeDir, _ = os.UserHomeDir()
+	err := syncHomedir.do(func() (err error) {
+		userHomeDir, err = os.UserHomeDir()
+		return
 	})
+	if err != nil {
+		return ""
+	}
 	return userHomeDir
+}
+
+// GetUserHomeDirWithErr returns user home directory
+// if error, return the error
+func GetUserHomeDirWithErr() (string, error) {
+	err := syncHomedir.do(func() (err error) {
+		userHomeDir, err = os.UserHomeDir()
+		return
+	})
+	if err != nil {
+		return "", err
+	}
+	return userHomeDir, nil
 }
 
 var replacer = strings.NewReplacer(
