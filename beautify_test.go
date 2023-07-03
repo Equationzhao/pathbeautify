@@ -7,7 +7,6 @@ import (
 )
 
 func TestTransform(t *testing.T) {
-
 	type args struct {
 		path string
 	}
@@ -27,9 +26,11 @@ func TestTransform(t *testing.T) {
 			wantTransformed: filepath.Join(GetUserHomeDir(), "a", "b", "c"),
 		},
 		{
-			name:            "homedir/path/dots/...",
-			args:            args{path: "~/a/b/c/..."},
-			wantTransformed: strings.Join([]string{GetUserHomeDir(), "a", "b", "c", "..", ".."}, string(filepath.Separator)),
+			name: "homedir/path/dots/...",
+			args: args{path: "~/a/b/c/..."},
+			wantTransformed: strings.Join(
+				[]string{GetUserHomeDir(), "a", "b", "c", "..", ".."}, string(filepath.Separator),
+			),
 		},
 		{
 			name:            "normal path",
@@ -67,9 +68,11 @@ func TestTransform(t *testing.T) {
 			wantTransformed: filepath.Join("..", "..", "..", "..", "..", "..", ".."),
 		},
 		{
-			name:            "dots/dots",
-			args:            args{path: "a/b/.../.../../c"},
-			wantTransformed: strings.Join([]string{"a", "b", "..", "..", "..", "..", "..", "c"}, string(filepath.Separator)),
+			name: "dots/dots",
+			args: args{path: "a/b/.../.../../c"},
+			wantTransformed: strings.Join(
+				[]string{"a", "b", "..", "..", "..", "..", "..", "c"}, string(filepath.Separator),
+			),
 		},
 		{
 			name:            "root",
@@ -98,10 +101,12 @@ func TestTransform(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if gotTransformed := Transform(tt.args.path); gotTransformed != tt.wantTransformed {
-				t.Errorf("Transform() = %v, want %v", gotTransformed, tt.wantTransformed)
-			}
-		})
+		t.Run(
+			tt.name, func(t *testing.T) {
+				if gotTransformed := Transform(tt.args.path); gotTransformed != tt.wantTransformed {
+					t.Errorf("Transform() = %v, want %v", gotTransformed, tt.wantTransformed)
+				}
+			},
+		)
 	}
 }

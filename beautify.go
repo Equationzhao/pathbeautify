@@ -4,20 +4,25 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/valyala/bytebufferpool"
 )
 
-var syncHomedir once
-var userHomeDir string
+var (
+	syncHomedir once
+	userHomeDir string
+)
 
 // GetUserHomeDir returns user home directory
 // if error, return empty string
 func GetUserHomeDir() string {
-	err := syncHomedir.do(func() (err error) {
-		userHomeDir, err = os.UserHomeDir()
-		return
-	})
+	err := syncHomedir.do(
+		func() (err error) {
+			userHomeDir, err = os.UserHomeDir()
+			return
+		},
+	)
 	if err != nil {
 		return ""
 	}
@@ -27,24 +32,41 @@ func GetUserHomeDir() string {
 // GetUserHomeDirWithErr returns user home directory
 // if error, return the error
 func GetUserHomeDirWithErr() (string, error) {
-	err := syncHomedir.do(func() (err error) {
-		userHomeDir, err = os.UserHomeDir()
-		return
-	})
+	err := syncHomedir.do(
+		func() (err error) {
+			userHomeDir, err = os.UserHomeDir()
+			return
+		},
+	)
 	if err != nil {
 		return "", err
 	}
 	return userHomeDir, nil
 }
 
-var replacer = strings.NewReplacer(
-	"\\", string(filepath.Separator),
-	"/", string(filepath.Separator),
+var (
+	replacer         *strings.Replacer
+	replacerInitOnce sync.Once
 )
 
 // CleanSeparator convert '//' and '\' to os-specific separator
 func CleanSeparator(path string) string {
-	return replacer.Replace(path)
+	replacerInitOnce.Do(
+		func() {
+			switch filepath.Separator {
+			case '/':
+				replacer = strings.NewReplacer("\\", string(filepath.Separator))
+			case '\\':
+				replacer = strings.NewReplacer("/", string(filepath.Separator))
+			default:
+				replacer = nil
+			}
+		},
+	)
+	if replacer != nil {
+		return replacer.Replace(path)
+	}
+	return path
 }
 
 // Beautify is alias of Transform
@@ -60,7 +82,6 @@ func Beautify(path string) string {
 //	.... -> ../../..
 //	..../../.../a/b/c -> ../../../../../../a/b/c
 func Transform(path string) (transformed string) {
-
 	switch path {
 	case "./":
 		path = "."
